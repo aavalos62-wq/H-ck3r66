@@ -62,10 +62,19 @@
 
         <section class="view about-view" id="about" aria-labelledby="about-heading">
           <p class="eyebrow">THE SHORT VERSION</p><h1 id="about-heading">Less noise.<br /><em>More play.</em></h1>
-          <p class="about-copy">Hack.. is a tiny front door to games that load in the browser and get out of the way. The links open their respective publishers in a new tab, so the library stays light, fast, and easy to leave.</p>
+          <p class="about-copy">Hack.. is a tiny front door to games that load in the browser and get out of the way. Every title opens in the local game room, so the library stays light, fast, and easy to leave.</p>
           <p class="meta">BUILD 01 / VERCEL READY</p>
         </section>
       </main>
+
+      <div class="player" id="player" hidden role="dialog" aria-modal="true" aria-labelledby="player-title">
+        <div class="player-panel">
+          <header class="player-header"><div><p class="eyebrow" id="player-category">ARCADE / LOCAL</p><h2 id="player-title">Game</h2></div><button class="icon-button" id="close-player" type="button" aria-label="Close game" title="Close game"><i data-lucide="x"></i></button></header>
+          <div class="player-hud"><span>SCORE <b id="player-score">0000</b></span><span>TIME <b id="player-time">30</b></span><span>BEST <b id="player-best">0000</b></span></div>
+          <canvas id="game-canvas" width="900" height="500" aria-label="Playable game canvas"></canvas>
+          <div class="player-controls"><p id="player-help">Move with the arrow keys or WASD. Collect the bright targets.</p><button class="player-button" id="restart-game" type="button"><i data-lucide="rotate-ccw"></i> Restart</button></div>
+        </div>
+      </div>
 
       <footer><span>H&#97;&#99;&#107;.. / 2026</span><span>CURATED FOR FOCUS</span></footer>
     </div>
