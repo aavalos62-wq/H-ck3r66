@@ -34,7 +34,7 @@
               <p class="eyebrow">LIBRARY / 04</p>
               <h1 id="games-heading">Find your next<br /><em>quiet</em> escape.</h1>
             </div>
-            <p class="intro-copy">A small collection of free-to-play browser games, selected for a clean start and an easy exit.</p>
+            <p class="intro-copy"><span id="library-count">104</span> free-to-play browser games, selected for a clean start and an easy exit.</p>
           </div>
 
           <div class="toolbar">
@@ -43,27 +43,12 @@
               <button class="filter active" data-filter="all" type="button">All</button>
               <button class="filter" data-filter="arcade" type="button">Arcade</button>
               <button class="filter" data-filter="puzzle" type="button">Puzzle</button>
+              <button class="filter" data-filter="action" type="button">Action</button>
+              <button class="filter" data-filter="sports" type="button">Sports</button>
             </div>
           </div>
 
-          <div class="game-grid" id="game-grid">
-            <article class="game-card featured" data-category="arcade" data-name="hexgl arcade racing">
-              <div class="card-art art-rings"><span>01</span><i data-lucide="move-up-right"></i></div>
-              <div class="card-body"><div><p class="card-type">ARCADE / OPEN SOURCE</p><h2>HexGL</h2></div><a class="launch" href="https://hexgl.bkcore.com/play/" target="_blank" rel="noopener noreferrer" aria-label="Launch HexGL" title="Launch game"><i data-lucide="arrow-up-right"></i></a></div>
-            </article>
-            <article class="game-card" data-category="puzzle" data-name="2048 puzzle">
-              <div class="card-art art-grid"><span>02</span><i data-lucide="grid-2x2"></i></div>
-              <div class="card-body"><div><p class="card-type">PUZZLE / CLASSIC</p><h2>2048</h2></div><a class="launch" href="https://play2048.co/" target="_blank" rel="noopener noreferrer" aria-label="Launch 2048" title="Launch game"><i data-lucide="arrow-up-right"></i></a></div>
-            </article>
-            <article class="game-card" data-category="arcade" data-name="subway surfers runners">
-              <div class="card-art art-lines"><span>03</span><i data-lucide="route"></i></div>
-              <div class="card-body"><div><p class="card-type">ARCADE / RUNNER</p><h2>Runner</h2></div><a class="launch" href="https://poki.com/en/g/subway-surfers" target="_blank" rel="noopener noreferrer" aria-label="Launch Runner" title="Launch game"><i data-lucide="arrow-up-right"></i></a></div>
-            </article>
-            <article class="game-card" data-category="puzzle" data-name="sudoku puzzle">
-              <div class="card-art art-cross"><span>04</span><i data-lucide="hash"></i></div>
-              <div class="card-body"><div><p class="card-type">PUZZLE / FOCUS</p><h2>Sudoku</h2></div><a class="launch" href="https://sudoku.com/" target="_blank" rel="noopener noreferrer" aria-label="Launch Sudoku" title="Launch game"><i data-lucide="arrow-up-right"></i></a></div>
-            </article>
-          </div>
+          <div class="game-grid" id="game-grid"></div>
           <p class="empty-state" id="empty-state" hidden>No games match that search.</p>
         </section>
 

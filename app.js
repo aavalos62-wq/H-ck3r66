@@ -21,6 +21,34 @@ document.querySelectorAll('.nav-item').forEach((button) => {
   });
 });
 
+const gameSeeds = {
+  arcade: ['HexGL', 'Subway Surfers', 'Temple Run 2', 'Fireboy and Watergirl', 'Doodle Jump', 'Flappy Bird', 'Crossy Road', 'Jetpack Joyride', 'Fruit Ninja', 'Angry Birds', 'Cut the Rope', 'Hill Climb Racing', 'Geometry Dash', 'Stack', 'Paper.io 2', 'Helix Jump', 'Color Tunnel', 'Drift Boss', 'Stickman Hook', 'Vex 7', 'Action King: Draw Fight', 'Gold Miner', 'Bob the Robber', 'Duck Life', 'Monkey Mart', 'Fireboy and Watergirl 2', 'Red Ball 4', 'Fancy Pants Adventure', 'Super Mario 63', 'Pac-Man', 'Tetris', 'Snake', 'Space Invaders', 'Pinball', 'Asteroids', 'Breakout', 'Sonic Run', 'Mega Man X', 'Kirby Adventure', 'Minesweeper'],
+  puzzle: ['2048', 'Sudoku', 'Bubble Shooter', 'Mahjong', 'Cut the Rope', 'Flow Free', 'Block Blast', 'Tangle Master', 'Unblock Me', 'Water Sort', 'Merge Fruit', 'Wood Block Puzzle', 'Nuts and Bolts', 'The Impossible Quiz', 'Brain Test', 'Words of Wonders', 'Wordle', 'Crossword', 'Solitaire', 'FreeCell', 'Chess', 'Checkers', 'Backgammon', 'Mancala', 'Dominoes', 'Connect 4', 'Battleship', 'Memory Match', 'Nonogram', 'Mekorama'],
+  action: ['Action Games', 'Getaway Shootout', 'Gun Mayhem 2', 'Bullet Force', 'Shell Shockers', 'Krunker', 'Rooftop Snipers', 'Stickman Fighting', 'Mortal Kombat', 'Ninja Clash Heroes', 'Zombs Royale', 'Bad Ice Cream', 'Vex 6', 'Ragdoll Archers', 'Drunken Duel', 'Superfighters', 'Fireboy Escape', 'Raft Wars', 'Duck Hunt', 'Zombie Mission', 'Stick Merge', 'Boxing Random', 'Soccer Random', 'Basket Random', 'Tennis Masters', 'Masked Forces', 'Strike Force Kitty', 'Hobo', 'Action Turnip', 'Monster Tracks'],
+  sports: ['Basketball Stars', 'Football Legends', 'Soccer Skills World Cup', 'Basketball Slam Dunk', 'Volleyball Challenge', 'Tennis Clash', 'Golf Battle', 'Mini Golf World', 'Bowling Stars', 'Table Tennis World Tour', '8 Ball Pool', 'Billiards', 'Drift Hunters', 'Moto X3M', 'Racing Limits', 'Real Cars in City', 'Highway Traffic', 'Bus and Subway', 'Super Bike the Champion', 'Snow Rider 3D', 'Skateboard Hero', 'Rally Point 4', 'Grand City Stunts', 'Monster Truck', 'Parking Fury', 'Winx Bloom Coolgirl', 'Horse Riding Simulator', 'Archery World Tour', 'Stickman Golf', 'Rooftop Run']
+};
+
+const directLinks = {
+  'HexGL': 'https://hexgl.bkcore.com/play/',
+  '2048': 'https://play2048.co/',
+  'Subway Surfers': 'https://poki.com/en/g/subway-surfers'
+};
+
+const slugify = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const gameGrid = document.querySelector('#game-grid');
+const games = Object.entries(gameSeeds).flatMap(([category, names]) => names.map((name) => ({ name, category, url: directLinks[name] || `https://poki.com/en/g/${slugify(name)}` })));
+
+gameGrid.innerHTML = games.map((game, index) => {
+  const art = ['art-rings', 'art-grid', 'art-lines', 'art-cross'][index % 4];
+  const icon = ['move-up-right', 'grid-2x2', 'route', 'hash'][index % 4];
+  const number = String(index + 1).padStart(3, '0');
+  return `<article class="game-card${index === 0 ? ' featured' : ''}" data-category="${game.category}" data-name="${game.name.toLowerCase()} ${game.category}">
+    <div class="card-art ${art}"><span>${number}</span><i data-lucide="${icon}"></i></div>
+    <div class="card-body"><div><p class="card-type">${game.category.toUpperCase()} / BROWSER</p><h2>${game.name}</h2></div><a class="launch" href="${game.url}" target="_blank" rel="noopener noreferrer" aria-label="Launch ${game.name}" title="Launch game"><i data-lucide="arrow-up-right"></i></a></div>
+  </article>`;
+}).join('');
+
+document.querySelector('#library-count').textContent = games.length;
 const cards = [...document.querySelectorAll('.game-card')];
 const search = document.querySelector('#game-search');
 const emptyState = document.querySelector('#empty-state');
