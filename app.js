@@ -31,11 +31,10 @@ const gameSeeds = {
 const slugify = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const realEmbeds = {
   'HexGL': 'https://hexgl.bkcore.com/play/',
-  'Subway Surfers': 'https://poki.com/en/g/subway-surfers',
   '2048': 'https://play2048.co/'
 };
 const gameGrid = document.querySelector('#game-grid');
-const games = Object.entries(gameSeeds).flatMap(([category, names]) => names.map((name) => ({ name, category, embedUrl: realEmbeds[name] })));
+const games = Object.entries(gameSeeds).flatMap(([category, names]) => names.map((name) => ({ name, category, embedUrl: realEmbeds[name], mode: name === 'Subway Surfers' ? 'runner' : 'collect' })));
 
 gameGrid.innerHTML = games.map((game, index) => {
   const art = ['art-rings', 'art-grid', 'art-lines', 'art-cross'][index % 4];
@@ -71,6 +70,10 @@ const pressedKeys = new Set();
 
 function drawGame() {
   if (!gameState) return;
+  if (gameState.mode === 'runner') {
+    drawRunner();
+    return;
+  }
   const { player: hero, target } = gameState;
   context.fillStyle = body.classList.contains('light') ? '#f2f2ef' : '#171717';
   context.fillRect(0, 0, canvas.width, canvas.height);
@@ -86,8 +89,40 @@ function drawGame() {
   context.strokeRect(hero.x - 18, hero.y - 18, 36, 36);
 }
 
+function drawRunner() {
+  const roadTop = 80;
+  const laneWidth = canvas.width / 3;
+  context.fillStyle = '#151515';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = '#272727';
+  context.beginPath();
+  context.moveTo(canvas.width * .2, roadTop);
+  context.lineTo(canvas.width * .8, roadTop);
+  context.lineTo(canvas.width, canvas.height);
+  context.lineTo(0, canvas.height);
+  context.closePath();
+  context.fill();
+  context.strokeStyle = 'rgba(255,255,255,.2)';
+  context.setLineDash([20, 18]);
+  for (let lane = 1; lane < 3; lane += 1) { context.beginPath(); context.moveTo(lane * laneWidth, roadTop); context.lineTo(lane * laneWidth, canvas.height); context.stroke(); }
+  context.setLineDash([]);
+  const heroX = (gameState.lane + .5) * laneWidth;
+  const heroY = canvas.height - 78 - gameState.jump;
+  context.fillStyle = '#f3f3f0';
+  context.fillRect(heroX - 17, heroY - 32, 34, 54);
+  context.strokeStyle = '#d7ff3f';
+  context.strokeRect(heroX - 22, heroY - 37, 44, 64);
+  const obstacleX = (gameState.obstacleLane + .5) * laneWidth;
+  context.fillStyle = '#d7ff3f';
+  context.fillRect(obstacleX - 30, gameState.obstacleY, 60, 42);
+}
+
 function moveGame() {
   if (!gameState || gameState.time <= 0) return;
+  if (gameState.mode === 'runner') {
+    moveRunner();
+    return;
+  }
   const speed = 5;
   if (pressedKeys.has('arrowup') || pressedKeys.has('w')) gameState.player.y -= speed;
   if (pressedKeys.has('arrowdown') || pressedKeys.has('s')) gameState.player.y += speed;
@@ -103,6 +138,27 @@ function moveGame() {
   }
   drawGame();
   animationFrame = requestAnimationFrame(moveGame);
+}
+
+function moveRunner() {
+  if (pressedKeys.has('arrowleft') || pressedKeys.has('a')) { gameState.lane = Math.max(0, gameState.lane - 1); pressedKeys.delete('arrowleft'); pressedKeys.delete('a'); }
+  if (pressedKeys.has('arrowright') || pressedKeys.has('d')) { gameState.lane = Math.min(2, gameState.lane + 1); pressedKeys.delete('arrowright'); pressedKeys.delete('d'); }
+  if ((pressedKeys.has('arrowup') || pressedKeys.has('w') || pressedKeys.has(' ')) && gameState.jump === 0) { gameState.jump = 105; pressedKeys.delete('arrowup'); pressedKeys.delete('w'); pressedKeys.delete(' '); }
+  gameState.jump = Math.max(0, gameState.jump - 4);
+  gameState.obstacleY += 7;
+  if (gameState.obstacleY > canvas.height) {
+    gameState.score += 100;
+    gameState.obstacleY = -50;
+    gameState.obstacleLane = Math.floor(Math.random() * 3);
+    scoreOutput.textContent = String(gameState.score).padStart(4, '0');
+  }
+  if (gameState.obstacleY > canvas.height - 125 && gameState.obstacleY < canvas.height - 55 && gameState.obstacleLane === gameState.lane && gameState.jump < 35) {
+    gameState.time = 0;
+    playerHelp.textContent = `Run ended at ${gameState.score} points. Restart for another run.`;
+    timeOutput.textContent = '00';
+  }
+  drawGame();
+  if (gameState.time > 0) animationFrame = requestAnimationFrame(moveGame);
 }
 
 function startGame(game) {
@@ -124,13 +180,15 @@ function startGame(game) {
   frame.removeAttribute('src');
   canvas.hidden = false;
   const best = Number(localStorage.getItem(`hack-best-${slugify(game.name)}`) || 0);
-  gameState = { score: 0, time: 30, player: { x: canvas.width / 2, y: canvas.height / 2 }, target: { x: 120 + Math.random() * 660, y: 70 + Math.random() * 360 } };
+  gameState = game.mode === 'runner'
+    ? { mode: 'runner', score: 0, time: 30, lane: 1, jump: 0, obstacleLane: 1, obstacleY: -50 }
+    : { mode: 'collect', score: 0, time: 30, player: { x: canvas.width / 2, y: canvas.height / 2 }, target: { x: 120 + Math.random() * 660, y: 70 + Math.random() * 360 } };
   playerTitle.textContent = game.name;
   playerCategory.textContent = `${game.category.toUpperCase()} / LOCAL`;
   scoreOutput.textContent = '0000';
   timeOutput.textContent = '30';
   bestOutput.textContent = String(best).padStart(4, '0');
-  playerHelp.textContent = 'Move with the arrow keys or WASD. Collect the bright targets.';
+  playerHelp.textContent = game.mode === 'runner' ? 'Switch lanes with left/right. Jump with up or space.' : 'Move with the arrow keys or WASD. Collect the bright targets.';
   clearInterval(gameTimer);
   cancelAnimationFrame(animationFrame);
   gameTimer = setInterval(() => {
@@ -172,6 +230,13 @@ document.addEventListener('keyup', (event) => pressedKeys.delete(event.key.toLow
 canvas.addEventListener('pointerdown', (event) => {
   if (!gameState) return;
   const bounds = canvas.getBoundingClientRect();
+  if (gameState.mode === 'runner') {
+    const pointX = (event.clientX - bounds.left) / bounds.width;
+    const pointY = (event.clientY - bounds.top) / bounds.height;
+    gameState.lane = Math.max(0, Math.min(2, Math.floor(pointX * 3)));
+    if (pointY < .65 && gameState.jump === 0) gameState.jump = 105;
+    return;
+  }
   gameState.player.x = ((event.clientX - bounds.left) / bounds.width) * canvas.width;
   gameState.player.y = ((event.clientY - bounds.top) / bounds.height) * canvas.height;
 });
