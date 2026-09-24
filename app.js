@@ -29,8 +29,13 @@ const gameSeeds = {
 };
 
 const slugify = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const realEmbeds = {
+  'HexGL': 'https://hexgl.bkcore.com/play/',
+  'Subway Surfers': 'https://poki.com/en/g/subway-surfers',
+  '2048': 'https://play2048.co/'
+};
 const gameGrid = document.querySelector('#game-grid');
-const games = Object.entries(gameSeeds).flatMap(([category, names]) => names.map((name) => ({ name, category })));
+const games = Object.entries(gameSeeds).flatMap(([category, names]) => names.map((name) => ({ name, category, embedUrl: realEmbeds[name] })));
 
 gameGrid.innerHTML = games.map((game, index) => {
   const art = ['art-rings', 'art-grid', 'art-lines', 'art-cross'][index % 4];
@@ -50,6 +55,7 @@ let activeFilter = 'all';
 
 const player = document.querySelector('#player');
 const canvas = document.querySelector('#game-canvas');
+const frame = document.querySelector('#player-frame');
 const context = canvas.getContext('2d');
 const playerTitle = document.querySelector('#player-title');
 const playerCategory = document.querySelector('#player-category');
@@ -101,6 +107,22 @@ function moveGame() {
 
 function startGame(game) {
   currentGame = game;
+  if (game.embedUrl) {
+    clearInterval(gameTimer);
+    cancelAnimationFrame(animationFrame);
+    canvas.hidden = true;
+    frame.hidden = false;
+    frame.src = game.embedUrl;
+    playerTitle.textContent = game.name;
+    playerCategory.textContent = `${game.category.toUpperCase()} / EMBEDDED`;
+    playerHelp.textContent = 'This is the original browser build, running inside the game room.';
+    player.hidden = false;
+    body.classList.add('player-open');
+    return;
+  }
+  frame.hidden = true;
+  frame.removeAttribute('src');
+  canvas.hidden = false;
   const best = Number(localStorage.getItem(`hack-best-${slugify(game.name)}`) || 0);
   gameState = { score: 0, time: 30, player: { x: canvas.width / 2, y: canvas.height / 2 }, target: { x: 120 + Math.random() * 660, y: 70 + Math.random() * 360 } };
   playerTitle.textContent = game.name;
@@ -132,6 +154,9 @@ function closeGame() {
   body.classList.remove('player-open');
   clearInterval(gameTimer);
   cancelAnimationFrame(animationFrame);
+  frame.hidden = true;
+  frame.removeAttribute('src');
+  canvas.hidden = false;
   currentGame = null;
   gameState = null;
 }

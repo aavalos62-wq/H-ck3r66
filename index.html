@@ -71,6 +71,7 @@
         <div class="player-panel">
           <header class="player-header"><div><p class="eyebrow" id="player-category">ARCADE / LOCAL</p><h2 id="player-title">Game</h2></div><button class="icon-button" id="close-player" type="button" aria-label="Close game" title="Close game"><i data-lucide="x"></i></button></header>
           <div class="player-hud"><span>SCORE <b id="player-score">0000</b></span><span>TIME <b id="player-time">30</b></span><span>BEST <b id="player-best">0000</b></span></div>
+          <iframe class="player-frame" id="player-frame" title="Embedded game" allow="fullscreen; autoplay; gamepad" referrerpolicy="no-referrer" hidden></iframe>
           <canvas id="game-canvas" width="900" height="500" aria-label="Playable game canvas"></canvas>
           <div class="player-controls"><p id="player-help">Move with the arrow keys or WASD. Collect the bright targets.</p><button class="player-button" id="restart-game" type="button"><i data-lucide="rotate-ccw"></i> Restart</button></div>
         </div>
