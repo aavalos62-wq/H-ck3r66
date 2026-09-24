@@ -29,12 +29,8 @@ const gameSeeds = {
 };
 
 const slugify = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-const realEmbeds = {
-  'HexGL': 'https://hexgl.bkcore.com/play/',
-  '2048': 'https://play2048.co/'
-};
 const gameGrid = document.querySelector('#game-grid');
-const games = Object.entries(gameSeeds).flatMap(([category, names]) => names.map((name) => ({ name, category, embedUrl: realEmbeds[name], mode: name === 'Subway Surfers' ? 'runner' : 'collect' })));
+const games = Object.entries(gameSeeds).flatMap(([category, names]) => names.map((name) => ({ name, category, mode: name === 'Subway Surfers' ? 'runner' : name === '2048' ? '2048' : 'collect' })));
 
 gameGrid.innerHTML = games.map((game, index) => {
   const art = ['art-rings', 'art-grid', 'art-lines', 'art-cross'][index % 4];
@@ -72,6 +68,10 @@ function drawGame() {
   if (!gameState) return;
   if (gameState.mode === 'runner') {
     drawRunner();
+    return;
+  }
+  if (gameState.mode === '2048') {
+    draw2048();
     return;
   }
   const { player: hero, target } = gameState;
@@ -115,6 +115,28 @@ function drawRunner() {
   const obstacleX = (gameState.obstacleLane + .5) * laneWidth;
   context.fillStyle = '#d7ff3f';
   context.fillRect(obstacleX - 30, gameState.obstacleY, 60, 42);
+}
+
+function draw2048() {
+  context.fillStyle = body.classList.contains('light') ? '#e1e1dc' : '#242424';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  const size = 92;
+  const gap = 12;
+  const left = (canvas.width - (size * 4 + gap * 3)) / 2;
+  const top = (canvas.height - (size * 4 + gap * 3)) / 2;
+  gameState.board.forEach((row, rowIndex) => row.forEach((value, columnIndex) => {
+    const x = left + columnIndex * (size + gap);
+    const y = top + rowIndex * (size + gap);
+    context.fillStyle = value ? (value > 4 ? '#d7ff3f' : '#f3f3f0') : (body.classList.contains('light') ? '#c9c9c3' : '#383838');
+    context.fillRect(x, y, size, size);
+    if (value) {
+      context.fillStyle = value > 4 ? '#111' : '#222';
+      context.font = `500 ${value > 999 ? 27 : 34}px "DM Mono"`;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(value, x + size / 2, y + size / 2);
+    }
+  }));
 }
 
 function moveGame() {
@@ -161,38 +183,62 @@ function moveRunner() {
   if (gameState.time > 0) animationFrame = requestAnimationFrame(moveGame);
 }
 
+function move2048(direction) {
+  const before = JSON.stringify(gameState.board);
+  const rotated = direction === 'left' || direction === 'right' ? gameState.board : rotateBoard(gameState.board);
+  const rows = rotated.map((row) => collapseRow(direction === 'right' ? [...row].reverse() : row));
+  const next = direction === 'right' ? rows.map((row) => [...row].reverse()) : rows;
+  gameState.board = direction === 'up' || direction === 'down' ? rotateBoard(next, direction === 'up' ? 3 : 1) : next;
+  if (JSON.stringify(gameState.board) !== before) {
+    addTile2048();
+    gameState.score += 10;
+    scoreOutput.textContent = String(gameState.score).padStart(4, '0');
+    drawGame();
+  }
+}
+
+function collapseRow(row) {
+  const values = row.filter(Boolean);
+  const collapsed = [];
+  for (let index = 0; index < values.length; index += 1) {
+    if (values[index] === values[index + 1]) { collapsed.push(values[index] * 2); index += 1; } else collapsed.push(values[index]);
+  }
+  while (collapsed.length < 4) collapsed.push(0);
+  return collapsed;
+}
+
+function rotateBoard(board, direction = 1) {
+  let result = board.map((row) => [...row]);
+  for (let turn = 0; turn < direction; turn += 1) result = result[0].map((_, column) => result.map((row) => row[column]).reverse());
+  return result;
+}
+
+function addTile2048() {
+  const open = [];
+  gameState.board.forEach((row, rowIndex) => row.forEach((value, columnIndex) => { if (!value) open.push([rowIndex, columnIndex]); }));
+  if (open.length) { const [row, column] = open[Math.floor(Math.random() * open.length)]; gameState.board[row][column] = Math.random() > .1 ? 2 : 4; }
+}
+
 function startGame(game) {
   currentGame = game;
-  if (game.embedUrl) {
-    clearInterval(gameTimer);
-    cancelAnimationFrame(animationFrame);
-    canvas.hidden = true;
-    frame.hidden = false;
-    frame.src = game.embedUrl;
-    playerTitle.textContent = game.name;
-    playerCategory.textContent = `${game.category.toUpperCase()} / EMBEDDED`;
-    playerHelp.textContent = 'This is the original browser build, running inside the game room.';
-    player.hidden = false;
-    body.classList.add('player-open');
-    return;
-  }
-  frame.hidden = true;
-  frame.removeAttribute('src');
   canvas.hidden = false;
   const best = Number(localStorage.getItem(`hack-best-${slugify(game.name)}`) || 0);
   gameState = game.mode === 'runner'
     ? { mode: 'runner', score: 0, time: 30, lane: 1, jump: 0, obstacleLane: 1, obstacleY: -50 }
+    : game.mode === '2048'
+      ? { mode: '2048', score: 0, time: 300, board: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]] }
     : { mode: 'collect', score: 0, time: 30, player: { x: canvas.width / 2, y: canvas.height / 2 }, target: { x: 120 + Math.random() * 660, y: 70 + Math.random() * 360 } };
+  if (game.mode === '2048') { addTile2048(); addTile2048(); }
   playerTitle.textContent = game.name;
   playerCategory.textContent = `${game.category.toUpperCase()} / LOCAL`;
   scoreOutput.textContent = '0000';
-  timeOutput.textContent = '30';
+  timeOutput.textContent = game.mode === '2048' ? '∞' : '30';
   bestOutput.textContent = String(best).padStart(4, '0');
-  playerHelp.textContent = game.mode === 'runner' ? 'Switch lanes with left/right. Jump with up or space.' : 'Move with the arrow keys or WASD. Collect the bright targets.';
+  playerHelp.textContent = game.mode === 'runner' ? 'Switch lanes with left/right. Jump with up or space.' : game.mode === '2048' ? 'Use the arrow keys to merge matching tiles.' : 'Move with the arrow keys or WASD. Collect the bright targets.';
   clearInterval(gameTimer);
   cancelAnimationFrame(animationFrame);
   gameTimer = setInterval(() => {
-    if (!gameState || gameState.time <= 0) return;
+    if (!gameState || gameState.mode === '2048' || gameState.time <= 0) return;
     gameState.time -= 1;
     timeOutput.textContent = String(gameState.time).padStart(2, '0');
     if (gameState.time === 0) {
@@ -212,8 +258,6 @@ function closeGame() {
   body.classList.remove('player-open');
   clearInterval(gameTimer);
   cancelAnimationFrame(animationFrame);
-  frame.hidden = true;
-  frame.removeAttribute('src');
   canvas.hidden = false;
   currentGame = null;
   gameState = null;
@@ -224,6 +268,10 @@ document.querySelector('#close-player').addEventListener('click', closeGame);
 document.querySelector('#restart-game').addEventListener('click', () => startGame(currentGame));
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && !player.hidden) closeGame();
+  if (!player.hidden && gameState?.mode === '2048' && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+    event.preventDefault();
+    move2048(event.key.replace('Arrow', '').toLowerCase());
+  }
   pressedKeys.add(event.key.toLowerCase());
 });
 document.addEventListener('keyup', (event) => pressedKeys.delete(event.key.toLowerCase()));
@@ -237,6 +285,7 @@ canvas.addEventListener('pointerdown', (event) => {
     if (pointY < .65 && gameState.jump === 0) gameState.jump = 105;
     return;
   }
+  if (gameState.mode === '2048') return;
   gameState.player.x = ((event.clientX - bounds.left) / bounds.width) * canvas.width;
   gameState.player.y = ((event.clientY - bounds.top) / bounds.height) * canvas.height;
 });
